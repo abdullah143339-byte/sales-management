@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block header %}Product Columns{% endblock %}
+{% block content %}
+
+<div class="grid" style="align-items: start;">
+  <div class="card">
+    <h3>Standard Columns</h3>
+    <p class="note">Built-in columns can be hidden. Add them back from the box below.</p>
+    <table>
+      <thead><tr><th>Column</th><th>State</th><th class="num">Action</th></tr></thead>
+      <tbody>
+        {% for c in builtins %}
+        <tr>
+          <td><b>{{ c['name'] }}</b></td>
+          <td>
+            {% if c['hidden'] %}
+              <span class="pill pill-hidden">Hidden</span>
+            {% else %}
+              <span class="pill pill-active">Visible</span>
+            {% endif %}
+          </td>
+          <td class="row-actions">
+            {% if c['hidden'] %}
+              <form class="inline" method="post" action="{{ url_for('column_add') }}">
+                <input type="hidden" name="name" value="{{ c['name'] }}">
+                <button class="btn btn-sm btn-success">Show Again</button>
+              </form>
+            {% else %}
+              <form class="inline" method="post" action="{{ url_for('column_hide', col_key=c['id']) }}">
+                <button class="btn btn-sm" data-confirm="Hide '{{ c['name'] }}' from product lists?">Hide</button>
+              </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Custom Columns</h3>
+    <form method="post" action="{{ url_for('column_add') }}" class="toolbar">
+      <input type="text" name="name" placeholder="New column name, e.g. Brand, Color...">
+      <button class="btn btn-primary" type="submit">Add</button>
+    </form>
+    <table>
+      <thead><tr><th>Column</th><th class="num">Action</th></tr></thead>
+      <tbody>
+        {% for c in customs %}
+        <tr>
+          <td><b>{{ c['name'] }}</b></td>
+          <td class="row-actions">
+            <form class="inline" method="post" action="{{ url_for('column_delete', col_id=c['id']) }}"
+                  data-confirm="Delete column '{{ c['name'] }}'? Saved values will be removed too.">
+              <button class="btn btn-sm btn-danger">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="2" class="empty">No custom columns yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

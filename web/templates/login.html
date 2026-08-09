@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+{% block full %}
+<div class="login-wrap">
+  <div class="login-card">
+    <div class="login-logo">S</div>
+    <h1>Sales Manager</h1>
+    <p class="login-sub">Sign in to continue</p>
+    {% if error %}
+      <div class="flash flash-error">{{ error }}</div>
+    {% endif %}
+    <form method="post" class="login-form" autocomplete="off">
+      <label>Username
+        <input type="text" name="username" value="{{ request.form.get('username', '') }}" required autofocus>
+      </label>
+      <label>Password
+        <input type="password" name="password" required>
+      </label>
+      <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

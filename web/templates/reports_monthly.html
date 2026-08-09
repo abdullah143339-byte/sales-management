@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block header %}Monthly Report{% endblock %}
+{% block content %}
+
+<form method="get" action="{{ url_for('report_monthly') }}" class="filter-form">
+  <label>Year
+    <select name="year" onchange="this.form.submit()">
+      {% for y in range(2024, 2032) %}
+        <option value="{{ y }}" {{ 'selected' if y == year }}>{{ y }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Month
+    <select name="month" onchange="this.form.submit()">
+      {% for m in range(1, 13) %}
+        <option value="{{ m }}" {{ 'selected' if m == month }}>{{ ['', 'January','February','March','April','May','June','July','August','September','October','November','December'][m] }}</option>
+      {% endfor %}
+    </select>
+  </label>
+</form>
+
+<div class="grid" style="grid-template-columns: repeat(3, 1fr);">
+  <div class="stat"><div class="label">Total Sales</div><div class="value gradient">{{ totals.total | rs }}</div></div>
+  <div class="stat"><div class="label">Items Sold</div><div class="value">{{ totals.qty | inum }}</div></div>
+  <div class="stat"><div class="label">Transactions</div><div class="value">{{ totals.transactions | inum }}</div></div>
+</div>
+
+<div class="grid" style="grid-template-columns: 1.4fr 1fr; align-items: start;">
+  <div class="card">
+    <h3>Product Summary</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th class="num">Avg Price</th>
+            <th class="num">Qty</th>
+            <th class="num">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in product_rows %}
+          <tr>
+            <td><b>{{ r['product_name'] }}</b></td>
+            <td class="num">{{ r['avg_price_paisa'] | rs }}</td>
+            <td class="num">{{ r['quantity'] | inum }}</td>
+            <td class="num">{{ r['total_amount_paisa'] | rs }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" class="empty">No sales this month.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Day-wise Totals</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Date</th><th class="num">Qty</th><th class="num">Total</th></tr></thead>
+        <tbody>
+          {% for r in daily_rows %}
+          <tr>
+            <td>{{ r['sale_date'] | fdate }}</td>
+            <td class="num">{{ r['quantity'] | inum }}</td>
+            <td class="num">{{ r['total_amount_paisa'] | rs }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

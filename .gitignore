@@ -13,3 +13,7 @@ data/
 *.db-shm
 *.log
 .env
+.vercel/
+
+.vercel
+.env*

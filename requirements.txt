@@ -1,1 +1,2 @@
-PySide6>=6.5
+Flask>=3.0
+psycopg2-binary>=2.9

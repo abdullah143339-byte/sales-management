@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block header %}Settings{% endblock %}
+{% block content %}
+
+<div class="grid" style="grid-template-columns: 1fr 1fr; align-items: start;">
+  <div class="card">
+    <h3>Account</h3>
+    <p class="note">Signed in as <b>{{ username }}</b> · App version: {{ version }}</p>
+    <form method="post" action="{{ url_for('settings_password') }}" autocomplete="off">
+      <label>Current Password
+        <input type="password" name="old" required>
+      </label>
+      <label>New Password (min 6 characters)
+        <input type="password" name="new" required>
+      </label>
+      <label>Confirm New Password
+        <input type="password" name="confirm" required>
+      </label>
+      <button class="btn btn-primary" type="submit">Change Password</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h3>About / Updates</h3>
+    <p class="note">
+      This is the <b>web version</b> of Sales Manager. It is always up to date —
+      when the developer publishes a new version, this same link updates automatically.
+      There is no need to install or download anything.
+    </p>
+    <p class="note">Use the <b>Add to Home Screen</b> option in your browser to install it like an app.</p>
+    {% if update_url %}
+      <p class="note">Update info URL: {{ update_url }}</p>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

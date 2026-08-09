@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>{% block title %}{{ active | title }}{% endblock %} · Sales Management</title>
+<meta name="theme-color" content="#0b1020">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sales Manager">
+<link rel="manifest" href="{{ url_for('manifest') }}">
+<link rel="icon" href="{{ url_for('static', filename='icon-192.png') }}">
+<link rel="apple-touch-icon" href="{{ url_for('static', filename='icon-192.png') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+{% if session.get('username') %}
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-logo">S</div>
+    <div class="brand-text">
+      <b>Sales Manager</b>
+      <small>Inventory &amp; Sales</small>
+    </div>
+  </div>
+  <nav>
+    <a href="{{ url_for('dashboard') }}" class="{{ 'active' if active == 'dashboard' }}">Dashboard</a>
+    <a href="{{ url_for('products_page') }}" class="{{ 'active' if active == 'products' }}">Products</a>
+    <a href="{{ url_for('sales_page') }}" class="{{ 'active' if active == 'sales' }}">Add Sale</a>
+    <a href="{{ url_for('top_selling') }}" class="{{ 'active' if active == 'top' }}">Top Selling</a>
+    <a href="{{ url_for('recent_sales') }}" class="{{ 'active' if active == 'recent' }}">Recent Sales</a>
+    <span class="nav-label">Reports</span>
+    <a href="{{ url_for('report_daily') }}" class="{{ 'active' if active == 'daily' }}">Daily Report</a>
+    <a href="{{ url_for('report_monthly') }}" class="{{ 'active' if active == 'monthly' }}">Monthly Report</a>
+    <a href="{{ url_for('report_product') }}" class="{{ 'active' if active == 'product' }}">Product Report</a>
+    <span class="nav-label">Manage</span>
+    <a href="{{ url_for('columns_page') }}" class="{{ 'active' if active == 'columns' }}">Product Columns</a>
+    <a href="{{ url_for('settings_page') }}" class="{{ 'active' if active == 'settings' }}">Settings</a>
+  </nav>
+  <div class="sidebar-foot">
+    <span>{{ username }}</span>
+    <a href="{{ url_for('logout') }}">Logout</a>
+  </div>
+</aside>
+
+<div class="main">
+  <header class="topbar">
+    <div class="topbar-title">{% block header %}{{ active | title }}{% endblock %}</div>
+    <div class="topbar-user">
+      <span class="avatar">{{ username[0] | upper }}</span>
+      <a href="{{ url_for('logout') }}" class="logout-link">Logout</a>
+    </div>
+  </header>
+  <main class="content">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="flash flash-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+</div>
+
+<nav class="bottomnav">
+  <a href="{{ url_for('dashboard') }}" class="{{ 'active' if active == 'dashboard' }}">
+    <span class="bn-ico">▦</span><span>Home</span>
+  </a>
+  <a href="{{ url_for('products_page') }}" class="{{ 'active' if active == 'products' }}">
+    <span class="bn-ico">☰</span><span>Products</span>
+  </a>
+  <a href="{{ url_for('sales_page') }}" class="bn-sale {{ 'active' if active == 'sales' }}">
+    <span class="bn-plus">+</span><span>Sale</span>
+  </a>
+  <a href="{{ url_for('report_monthly') }}" class="{{ 'active' if active == 'monthly' }}">
+    <span class="bn-ico">▤</span><span>Reports</span>
+  </a>
+  <a href="{{ url_for('settings_page') }}" class="{{ 'active' if active == 'settings' }}">
+    <span class="bn-ico">⚙</span><span>Settings</span>
+  </a>
+</nav>
+{% else %}
+  {% block full %}{% endblock %}
+{% endif %}
+
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

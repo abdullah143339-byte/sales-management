@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if product else 'Add' }} Product{% endblock %}
+{% block header %}{{ 'Edit Product' if product else 'Add Product' }}{% endblock %}
+{% block content %}
+
+<div class="card" style="max-width: 640px;">
+  <form method="post" autocomplete="off">
+    <label>Product Name
+      <input type="text" name="name" value="{{ form.get('name', product['name'] if product else '') }}" required>
+    </label>
+    <div class="two-col">
+      <label>Unit Price (Rs.)
+        <input type="text" name="price" inputmode="decimal"
+               value="{{ form.get('price', product['unit_price_paisa'] if product else '') }}">
+      </label>
+      <label>Stock Quantity
+        <input type="text" name="stock" inputmode="numeric"
+               value="{{ form.get('stock', product['stock'] if product else '') }}">
+      </label>
+    </div>
+    <div class="radio-row">
+      <label><input type="radio" name="status" value="active"
+        {{ 'checked' if (form.get('status', product['status'] if product else 'active')) == 'active' }}> Active</label>
+      <label><input type="radio" name="status" value="inactive"
+        {{ 'checked' if (form.get('status', product['status'] if product else 'active')) == 'inactive' }}> Inactive</label>
+    </div>
+
+    {% if cols %}
+      <h3>Other Fields</h3>
+      {% for c in cols %}
+        <label>{{ c['name'] }}
+          <input type="text" name="col_{{ c['id'] }}"
+                 value="{{ form.get('col_' ~ c['id'], values.get(c['id'], '') if values else '') }}">
+        </label>
+      {% endfor %}
+    {% endif %}
+
+    <div class="toolbar">
+      <button class="btn btn-primary" type="submit">Save Product</button>
+      <a class="btn" href="{{ url_for('products_page') }}">Cancel</a>
+    </div>
+  </form>
+  <p class="note">Price is required. It can be entered like 9215 or 99.99. Stock can be left blank (0).</p>
+</div>
+
+{% endblock %}

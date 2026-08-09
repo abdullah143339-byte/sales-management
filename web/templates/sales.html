@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block header %}Add Sale{% endblock %}
+{% block content %}
+
+<div class="card" style="max-width: 640px;">
+  <form method="post" autocomplete="off">
+    <label>Product
+      <input type="text" name="product_search" list="product-list" id="product-search"
+             placeholder="Type to search product..." value="{{ request.form.get('product_search', '') }}">
+      <input type="hidden" name="product_id" id="product-id" value="{{ request.form.get('product_id', '') }}">
+    </label>
+    <datalist id="product-list">
+      {% for p in products %}
+        <option value="{{ p['name'] }}" data-id="{{ p['id'] }}" data-price="{{ p['unit_price_paisa'] | rs }}"></option>
+      {% endfor %}
+    </datalist>
+    <div class="two-col">
+      <label>Quantity
+        <input type="number" name="quantity" inputmode="numeric" min="1" step="1"
+               value="{{ request.form.get('quantity', '1') }}" required>
+      </label>
+      <label>Unit Price (Rs.)
+        <input type="text" id="price-hint" readonly class="note" style="background: rgba(255,255,255,0.03);"
+               placeholder="Select a product to see price">
+      </label>
+    </div>
+    <div class="two-col">
+      <label>Date
+        <input type="date" name="sale_date" value="{{ request.form.get('sale_date', today) }}">
+      </label>
+      <label>Time
+        <input type="time" name="sale_time" value="{{ request.form.get('sale_time', '') }}">
+      </label>
+    </div>
+    <button class="btn btn-primary btn-block" type="submit">Save Sale</button>
+  </form>
+  <p class="note">Total = Unit Price × Quantity. Stock is reduced automatically. Recent sales can be seen in <a href="{{ url_for('recent_sales') }}">Recent Sales</a>.</p>
+</div>
+
+<div class="card">
+  <h3>Quick Sell</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th class="num">Price</th>
+          <th class="num">Stock</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in products %}
+        <tr>
+          <td><b>{{ p['name'] }}</b></td>
+          <td class="num">{{ p['unit_price_paisa'] | rs }}</td>
+          <td class="num">{{ p['stock'] | inum }}</td>
+          <td class="row-actions">
+            <form class="inline" method="post" action="{{ url_for('sales_page') }}">
+              <input type="hidden" name="product_id" value="{{ p['id'] }}">
+              <input type="number" name="quantity" value="1" min="1" style="width: 80px;">
+              <button class="btn btn-sm btn-success" type="submit">Sell</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

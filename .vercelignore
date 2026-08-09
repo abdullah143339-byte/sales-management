@@ -1,0 +1,14 @@
+# Heavy / desktop-only content that must not be bundled into the web function
+dist/
+build/
+data/
+assets/
+scripts/
+tests/
+.github/
+*.spec
+*.exe
+*.zip
+.vercel/
+__pycache__/
+*.pyc
