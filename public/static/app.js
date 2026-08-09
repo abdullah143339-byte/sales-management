@@ -7,6 +7,20 @@
   }
   document.querySelectorAll(".flash").forEach(flash);
 
+  /* ---------- Mobile drawer menu ---------- */
+  var menuBtn = document.getElementById("menu-btn");
+  var drawer = document.getElementById("drawer");
+  if (menuBtn && drawer) {
+    var drawerBackdrop = document.getElementById("drawer-backdrop");
+    menuBtn.addEventListener("click", function () { drawer.classList.add("open"); });
+    if (drawerBackdrop) {
+      drawerBackdrop.addEventListener("click", function () { drawer.classList.remove("open"); });
+    }
+    drawer.querySelectorAll("a").forEach(function (a) {
+      a.addEventListener("click", function () { drawer.classList.remove("open"); });
+    });
+  }
+
   function fmtRs(paisa) {
     return "Rs. " + Math.round(paisa / 100).toLocaleString("en-US");
   }
