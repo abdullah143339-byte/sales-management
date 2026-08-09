@@ -1,0 +1,115 @@
+# Build the Windows .exe (PyInstaller) and the Android .apk
+# (pyside6-android-deploy, Linux-only) for every tag pushed as v*.
+# Both files are attached to the matching GitHub Release, so
+# https://github.com/<owner>/<repo>/releases/latest is the download URL
+# and version.json (served from raw.githubusercontent.com) drives the
+# in-app update check.
+
+name: build-release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    name: Windows exe
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build tools
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller pillow
+
+      - name: Build .exe
+        run: powershell -ExecutionPolicy Bypass -File scripts/build_windows.ps1
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-exe
+          path: dist/SalesManagement.exe
+
+  android:
+    name: Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install base tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends zip p7zip-full
+          pip install --upgrade pip
+          pip install "PySide6==6.11.1" "shiboken6==6.11.1"
+
+      - name: Download PySide6 Android wheels
+        run: |
+          mkdir -p wheels
+          curl -fL -o wheels/pyside6-aarch64.whl https://download.qt.io/official_releases/QtForPython/pyside6/pyside6-6.11.1-6.11.1-cp311-cp311-android_aarch64.whl
+          curl -fL -o wheels/shiboken6-aarch64.whl https://download.qt.io/official_releases/QtForPython/shiboken6/shiboken6-6.11.1-6.11.1-cp311-cp311-android_aarch64.whl
+
+      - name: Download Android SDK + NDK
+        run: |
+          git clone --depth 1 --branch 6.11.1 https://code.qt.io/pyside/pyside-setup
+          pip install -r pyside-setup/requirements.txt
+          pip install -r pyside-setup/tools/cross_compile_android/requirements.txt
+          python pyside-setup/tools/cross_compile_android/main.py --download-only --auto-accept-license
+
+      - name: Build APK
+        run: |
+          export ANDROID_SDK_ROOT="$HOME/.pyside6_android_deploy/android-sdk"
+          export ANDROID_NDK_ROOT="$HOME/.pyside6_android_deploy/android-ndk/android-ndk-r27c"
+          pyside6-android-deploy \
+            --wheel-pyside=wheels/pyside6-aarch64.whl \
+            --wheel-shiboken=wheels/shiboken6-aarch64.whl \
+            --name "Sales Management" \
+            --sdk-path "$ANDROID_SDK_ROOT" \
+            --ndk-path "$ANDROID_NDK_ROOT" \
+            -f
+
+      - name: Locate APK
+        run: |
+          apk=$(find . -name "*.apk" -not -path "./.gradle/*" | head -1)
+          echo "APK=$apk" >> $GITHUB_ENV
+          test -n "$apk"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: ${{ env.APK }}
+
+  publish:
+    name: Publish release
+    needs: [windows, android]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          generate_release_notes: true
+          files: |
+            artifacts/windows-exe/SalesManagement.exe
+            artifacts/android-apk/*.apk
