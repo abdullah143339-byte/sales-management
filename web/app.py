@@ -129,30 +129,14 @@ def health():
 def dashboard():
     store = get_store()
     today = datetime.date.today().isoformat()
-    month_start = today[:8] + "01"
-    today_stats = data.period_stats(store, today, today)
-    month_stats = data.period_stats(store, month_start, today)
 
     products = data.list_products(store, status="all")
     cols = data.visible_columns(store)
     values_map = data.all_product_column_values(store)
-    today_map, month_map, all_map = data.product_stats_all(store)
 
-    term = request.args.get("q", "").strip().lower()
-    status = request.args.get("status", "all")
     shown = []
     for p in products:
-        if status == "active" and p["status"] != "active":
-            continue
-        if status == "inactive" and p["status"] != "inactive":
-            continue
-        if term and not (term in p["name"].lower() or term == str(p["id"])):
-            continue
-        row = {"product": p, "cols": {}, "stats": {
-            "today": today_map.get(p["id"], {}),
-            "month": month_map.get(p["id"], {}),
-            "all_time": all_map.get(p["id"], {}),
-        }}
+        row = {"product": p, "cols": {}}
         vals = values_map.get(p["id"], {})
         for c in cols:
             if c["builtin"]:
@@ -170,11 +154,10 @@ def dashboard():
         day = (datetime.date.today() - datetime.timedelta(days=offset)).isoformat()
         chart_data.append((format_date(day), chart.get(day, 0)))
 
+    now_str = datetime.datetime.now().strftime("%A, %d %b %Y")
     return render("dashboard.html", active="dashboard",
-                  today_stats=today_stats, month_stats=month_stats,
                   products=shown, columns=cols, chart=chart_data,
-                  count=len(shown), total=len(products), q=request.args.get("q", ""),
-                  status=status)
+                  count=len(shown), total=len(products), now=now_str)
 
 
 # --------------------------------------------------------------------------
@@ -257,6 +240,20 @@ def product_edit(pid):
     values = data.all_product_column_values(store).get(pid, {})
     return render("product_form.html", active="products", cols=cols, product=product,
                   values=values, form=request.form)
+
+
+@app.route("/products/<int:pid>/history")
+@login_required
+def product_history(pid):
+    store = get_store()
+    product = data.get_product(store, pid)
+    if product is None:
+        flash("Product not found.", "error")
+        return redirect(url_for("products_page"))
+    stats = data.product_stats(store, pid)
+    history = data.product_sales_history(store, pid)
+    return render("history.html", active="products", product=product,
+                  stats=stats, history=history)
 
 
 @app.route("/products/<int:pid>/toggle", methods=["POST"])
@@ -349,7 +346,6 @@ def column_delete(col_id):
 @login_required
 def sales_page():
     store = get_store()
-    products = data.list_products(store, status="active")
     if request.method == "POST":
         try:
             pid = int(request.form.get("product_id", "0") or 0)
@@ -357,35 +353,35 @@ def sales_page():
             p = data.get_product(store, pid)
             if p is None or p["status"] != "active":
                 raise ValueError("Please select a product.")
-            sale_date = request.form.get("sale_date") or datetime.date.today().isoformat()
-            sale_time = request.form.get("sale_time") or datetime.datetime.now().strftime("%H:%M:%S")
+            sale_date = datetime.date.today().isoformat()
+            sale_time = datetime.datetime.now().strftime("%H:%M:%S")
             data.add_sale(store, p["id"], p["name"], p["unit_price_paisa"], qty,
                           sale_date, sale_time)
             flash("Sale saved.", "success")
             return redirect(url_for("sales_page"))
         except (ValueError, TypeError) as exc:
             flash(str(exc), "error")
-    return render("sales.html", active="sales", products=products,
-                  today=datetime.date.today().isoformat())
+    return render("sales.html", active="sales")
 
 
 @app.route("/api/products/search")
 @login_required
 def api_product_search():
+    store = get_store()
     term = request.args.get("q", "").strip()
-    rows = data.list_products(store=get_store(), search=term, status="active")[:20]
-    return {
-        "items": [
-            {
-                "id": p["id"],
-                "name": p["name"],
-                "price": p["unit_price_paisa"],
-                "price_text": format_currency(p["unit_price_paisa"]),
-                "stock": p["stock"],
-            }
-            for p in rows
-        ]
-    }
+    rows = data.list_products(store=store, search=term, status="active")[:20]
+    items = []
+    for p in rows:
+        stats = data.product_stats(store, p["id"])
+        items.append({
+            "id": p["id"],
+            "name": p["name"],
+            "price": p["unit_price_paisa"],
+            "price_text": format_currency(p["unit_price_paisa"]),
+            "stock": p["stock"],
+            "stats": stats,
+        })
+    return {"items": items}
 
 
 # --------------------------------------------------------------------------
@@ -399,7 +395,7 @@ def report_daily():
     date_str = request.form.get("date") or request.args.get("date") or datetime.date.today().isoformat()
     rows = data.sales_by_date(store, date_str)
     totals = data.daily_totals(store, date_str)
-    return render("reports_daily.html", active="daily", date=date_str,
+    return render("daily_report.html", active="daily", date=date_str,
                   rows=rows, totals=totals, fdate=format_date)
 
 
@@ -413,7 +409,7 @@ def report_monthly():
     product_rows = data.monthly_product_summary(store, year, month)
     daily_rows = data.monthly_daily_summary(store, year, month)
     totals = data.monthly_totals(store, year, month)
-    return render("reports_monthly.html", active="monthly", year=year, month=month,
+    return render("monthly_report.html", active="monthly", year=year, month=month,
                   product_rows=product_rows, daily_rows=daily_rows, totals=totals)
 
 
@@ -429,7 +425,7 @@ def report_product():
         if product is not None:
             stats = data.product_stats(store, int(pid))
             history = data.product_sales_history(store, int(pid))
-    return render("reports_product.html", active="product", products=products,
+    return render("product_report.html", active="product", products=products,
                   product=product, stats=stats, history=history)
 
 
@@ -437,21 +433,17 @@ def report_product():
 @login_required
 def top_selling():
     store = get_store()
-    days = request.args.get("days", type=int)
-    rows = data.top_selling(store, limit=20, days=days)
-    return render("rankings.html", active="top", kind="top", rows=rows, days=days)
+    rows = data.top_selling(store, limit=200)
+    grand_total = sum(r["total"] for r in rows)
+    return render("top_selling.html", active="top", rows=rows, grand_total=grand_total)
 
 
 @app.route("/recent-sales")
 @login_required
 def recent_sales():
     store = get_store()
-    term = request.args.get("q", "").strip()
-    if term:
-        rows = data.search_sales_by_product(store, term)
-    else:
-        rows = data.list_sales(store, limit=50)
-    return render("rankings.html", active="recent", kind="recent", rows=rows, q=term)
+    rows = data.list_sales(store, limit=200)
+    return render("recent_sales.html", active="recent", rows=rows)
 
 
 # --------------------------------------------------------------------------
@@ -463,8 +455,17 @@ def recent_sales():
 def settings_page():
     return render("settings.html", active="settings",
                   username=session["username"],
+                  backend=get_store().backend,
                   update_url=data.get_setting(get_store(), "update_url", ""),
                   version=os.environ.get("APP_VERSION", "web"))
+
+
+@app.route("/settings/update_url", methods=["POST"])
+@login_required
+def settings_update_url():
+    data.set_setting(get_store(), "update_url", request.form.get("update_url", "").strip())
+    flash("Update URL saved.", "success")
+    return redirect(url_for("settings_page"))
 
 
 @app.route("/settings/password", methods=["POST"])

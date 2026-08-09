@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block header %}Daily Sales Report{% endblock %}
+{% block content %}
+
+<div class="section-head">
+  <span class="section-accent"></span>
+  <h3>Daily Sales Report</h3>
+</div>
+
+<div class="filter-form">
+  <label>Date
+    <input type="date" name="date" id="ddate" value="{{ date }}" onchange="var u=new URL(location.href);u.searchParams.set('date',this.value);location.href=u;">
+  </label>
+  <label style="flex: 2;">
+    <input type="text" id="d-filter" placeholder="Filter by product...">
+  </label>
+  <button type="button" class="btn btn-print" onclick="window.print()">Print</button>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    <table id="daily-table">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th class="num">Unit Price</th>
+          <th class="num">Quantity</th>
+          <th class="num">Total Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr data-name="{{ r['product_name'] | lower }}">
+          <td><b>{{ r['product_name'] }}</b></td>
+          <td class="num">{{ r['unit_price_paisa'] | rs }}</td>
+          <td class="num">{{ r['quantity'] | inum }}</td>
+          <td class="num">{{ r['total_amount_paisa'] | rs }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="empty"><span class="big">🗓</span>No sales on this date.</td></tr>
+        {% endfor %}
+      </tbody>
+      {% if rows %}
+      <tfoot>
+        <tr class="total-row">
+          <td><b>TOTAL</b></td>
+          <td></td>
+          <td class="num"><b>{{ totals.qty | inum }}</b></td>
+          <td class="num"><b>{{ totals.total | rs }}</b></td>
+        </tr>
+      </tfoot>
+      {% endif %}
+    </table>
+  </div>
+  <div class="totals-label">
+    Total Quantity: <b>{{ totals.qty | inum }}</b>
+    &nbsp;&nbsp;|&nbsp;&nbsp; Total Sales: <b>{{ totals.total | rs }}</b>
+    &nbsp;&nbsp;|&nbsp;&nbsp; Transactions: <b>{{ totals.transactions | inum }}</b>
+  </div>
+</div>
+
+{% endblock %}

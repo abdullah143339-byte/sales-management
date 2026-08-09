@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block header %}Top Selling Products{% endblock %}
+{% block content %}
+
+<div class="section-head">
+  <span class="section-accent"></span>
+  <h3>Top Selling Products</h3>
+</div>
+<div class="page-sub">All products ranked by total sales amount (highest first).</div>
+
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 70px;">Rank</th>
+          <th>Product</th>
+          <th class="num">Total Sold Qty</th>
+          <th class="num">Total Sales</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td class="p-id">{{ loop.index }}</td>
+          <td><b>{{ r['product_name'] }}</b></td>
+          <td class="num">{{ r['qty'] | inum }}</td>
+          <td class="num">{{ r['total'] | rs }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="empty"><span class="big">🏆</span>No sales yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="count-label">{{ rows | length }} product(s) sold &nbsp;|&nbsp; Grand Total: <b>{{ grand_total | rs }}</b></div>
+</div>
+
+{% endblock %}

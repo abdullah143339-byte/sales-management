@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block header %}Sales History{% endblock %}
+{% block content %}
+
+<div class="toolbar">
+  <a class="btn" href="{{ url_for('products_page') }}">← Back to Products</a>
+  <span class="spacer"></span>
+  <button type="button" class="btn btn-print" onclick="window.print()">Print</button>
+</div>
+
+<div class="card">
+  <div class="summary-box">
+    <div class="summary-line"><b>{{ product['name'] }}</b> &nbsp;|&nbsp; Current Price: {{ product['unit_price_paisa'] | rs }}</div>
+    <div class="note">
+      Today: Qty {{ stats['today']['qty'] | inum }} &nbsp;|&nbsp; {{ stats['today']['total'] | rs }}
+      &nbsp;&nbsp;|&nbsp;&nbsp; This Month: Qty {{ stats['month']['qty'] | inum }} &nbsp;|&nbsp; {{ stats['month']['total'] | rs }}
+      &nbsp;&nbsp;|&nbsp;&nbsp; All Time: Qty {{ stats['all_time']['qty'] | inum }} &nbsp;|&nbsp; {{ stats['all_time']['total'] | rs }}
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-top: 16px;">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th><th>Time</th>
+          <th class="num">Quantity</th><th class="num">Unit Price</th><th class="num">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for h in history %}
+        <tr>
+          <td>{{ h['sale_date'] | fdate }}</td>
+          <td>{{ h['sale_time'] | ftime }}</td>
+          <td class="num">{{ h['quantity'] | inum }}</td>
+          <td class="num">{{ h['unit_price_paisa'] | rs }}</td>
+          <td class="num">{{ h['total_amount_paisa'] | rs }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="empty">No sales recorded for this product yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

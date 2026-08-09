@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block header %}Recent Sales{% endblock %}
+{% block content %}
+
+<div class="section-head">
+  <span class="section-accent"></span>
+  <h3>Recent Sales</h3>
+  <span class="spacer"></span>
+  <input type="text" id="recent-filter" placeholder="Filter by product name...">
+  <span class="count-label" id="recent-count" style="margin: 0 0 0 10px;"></span>
+</div>
+<div class="page-sub">The latest sales recorded in the system (most recent first).</div>
+
+<div class="card">
+  <div class="table-wrap">
+    <table id="recent-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Product</th>
+          <th class="num">Quantity</th>
+          <th class="num">Unit Price</th>
+          <th class="num">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr data-name="{{ r['product_name'] | lower }}">
+          <td>{{ r['sale_date'] | fdate }}</td>
+          <td>{{ r['sale_time'] | ftime }}</td>
+          <td><b>{{ r['product_name'] }}</b></td>
+          <td class="num">{{ r['quantity'] | inum }}</td>
+          <td class="num">{{ r['unit_price_paisa'] | rs }}</td>
+          <td class="num">{{ r['total_amount_paisa'] | rs }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="empty"><span class="big">🧾</span>No sales found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

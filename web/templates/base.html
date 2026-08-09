@@ -19,8 +19,8 @@
   <div class="brand">
     <div class="brand-logo">S</div>
     <div class="brand-text">
-      <b>Sales Manager</b>
-      <small>Inventory &amp; Sales</small>
+      <b>Sales Management</b>
+      <small>Inventory &amp; Reports</small>
     </div>
   </div>
   <nav>
@@ -29,16 +29,13 @@
     <a href="{{ url_for('sales_page') }}" class="{{ 'active' if active == 'sales' }}">Add Sale</a>
     <a href="{{ url_for('top_selling') }}" class="{{ 'active' if active == 'top' }}">Top Selling</a>
     <a href="{{ url_for('recent_sales') }}" class="{{ 'active' if active == 'recent' }}">Recent Sales</a>
-    <span class="nav-label">Reports</span>
     <a href="{{ url_for('report_daily') }}" class="{{ 'active' if active == 'daily' }}">Daily Report</a>
     <a href="{{ url_for('report_monthly') }}" class="{{ 'active' if active == 'monthly' }}">Monthly Report</a>
     <a href="{{ url_for('report_product') }}" class="{{ 'active' if active == 'product' }}">Product Report</a>
-    <span class="nav-label">Manage</span>
-    <a href="{{ url_for('columns_page') }}" class="{{ 'active' if active == 'columns' }}">Product Columns</a>
     <a href="{{ url_for('settings_page') }}" class="{{ 'active' if active == 'settings' }}">Settings</a>
   </nav>
   <div class="sidebar-foot">
-    <span>{{ username }}</span>
+    <span>Logged in: {{ username }}</span>
     <a href="{{ url_for('logout') }}">Logout</a>
   </div>
 </aside>

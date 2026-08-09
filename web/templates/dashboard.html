@@ -2,69 +2,35 @@
 {% block header %}Dashboard{% endblock %}
 {% block content %}
 
-<div class="grid">
-  <div class="stat">
-    <div class="label">Today's Sales</div>
-    <div class="value gradient">{{ today_stats.total | rs }}</div>
-    <div class="stat-grid">
-      <div><small>Qty</small><b>{{ today_stats.qty | inum }}</b></div>
-      <div><small>Sales</small><b>{{ today_stats.transactions | inum }}</b></div>
-    </div>
+<div class="hero-banner">
+  <div>
+    <div class="hero-title">Dashboard</div>
+    <div class="hero-sub">Overview of all products and sales</div>
   </div>
-  <div class="stat">
-    <div class="label">This Month</div>
-    <div class="value gradient">{{ month_stats.total | rs }}</div>
-    <div class="stat-grid">
-      <div><small>Qty</small><b>{{ month_stats.qty | inum }}</b></div>
-      <div><small>Sales</small><b>{{ month_stats.transactions | inum }}</b></div>
-    </div>
-  </div>
+  <div class="date-pill">{{ now }}</div>
+</div>
+
+<div class="section-head">
+  <span class="section-accent"></span>
+  <h3>All Products</h3>
+  <span class="product-count" id="product-count"></span>
+  <span class="spacer"></span>
+  <input type="text" id="dash-search" placeholder="Search products...  (type a name or ID)">
 </div>
 
 <div class="card">
-  <h3>Sales – Last 14 Days</h3>
-  {% set maxv = chart | map(attribute=1) | max %}
-  <div class="bars">
-    {% for day, val in chart %}
-      <div class="bar" title="{{ day }}: {{ val | rs }}">
-        {% if val %}
-          <div class="fill" style="height: {{ ((val / maxv) * 100) if maxv else 0 }}%;"></div>
-        {% else %}
-          <div class="fill" style="height: 2px; opacity: .2;"></div>
-        {% endif %}
-      </div>
-    {% endfor %}
-  </div>
-</div>
-
-<div class="card">
-  <div class="toolbar" style="margin-bottom: 6px;">
-    <h3 style="margin: 0;">Products</h3>
-    <span class="spacer"></span>
-    <a class="btn btn-primary btn-sm" href="{{ url_for('product_new') }}">+ Add Product</a>
-    <a class="btn btn-sm" href="{{ url_for('products_page') }}">View All</a>
-  </div>
-  <form method="get" action="{{ url_for('dashboard') }}" class="toolbar">
-    <input type="text" name="q" id="q" value="{{ q }}" placeholder="Search product name or ID...">
-    <select name="status" onchange="this.form.submit()">
-      <option value="all" {{ 'selected' if status == 'all' }}>All</option>
-      <option value="active" {{ 'selected' if status == 'active' }}>Active</option>
-      <option value="inactive" {{ 'selected' if status == 'inactive' }}>Inactive</option>
-    </select>
-  </form>
   <div class="table-wrap">
-    <table>
+    <table id="dash-products">
       <thead>
         <tr>
+          <th>ID</th>
           {% for c in columns %}<th>{{ c['name'] }}</th>{% endfor %}
-          <th class="num">Today</th>
-          <th class="num">This Month</th>
-          <th></th>
         </tr>
       </thead>
       <tbody>
         {% for row in products %}
-        <tr>
+        <tr data-name="{{ row['product']['name'] | lower }}" data-id="{{ row['product']['id'] }}">
+          <td class="p-id">{{ row['product']['id'] }}</td>
           {% for c in columns %}
             {% set cell = row['cols'][c['id']] %}
             <td>
@@ -74,21 +40,32 @@
               {% else %}{{ cell }}{% endif %}
             </td>
           {% endfor %}
-          <td class="num">{{ row['stats']['today']['total'] | rs }}</td>
-          <td class="num">{{ row['stats']['month']['total'] | rs }}</td>
-          <td class="row-actions">
-            <a class="btn btn-sm" href="{{ url_for('product_edit', pid=row['product']['id']) }}">Edit</a>
-            {% if row['product']['status'] == 'active' %}
-            <form class="inline" method="post" action="{{ url_for('sales_page') }}" data-confirm="">
-              <input type="hidden" name="product_id" value="{{ row['product']['id'] }}">
-              <input type="hidden" name="quantity" value="1">
-              <button class="btn btn-sm btn-success" type="submit">Sell</button>
-            </form>
-            {% endif %}
-          </td>
         </tr>
         {% else %}
-        <tr><td colspan="{{ columns | length + 3 }}" class="empty"><span class="big">📦</span>No products found.</td></tr>
+        <tr><td colspan="{{ columns | length + 1 }}" class="empty"><span class="big">📦</span>No products found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="section-head" style="margin-top: 22px;">
+  <span class="section-accent"></span>
+  <h3>Daily Sales (last 14 days)</h3>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    <table id="dash-chart">
+      <thead><tr><th>Date</th><th class="num">Total Sales</th></tr></thead>
+      <tbody>
+        {% for day, val in chart %}
+        <tr>
+          <td>{{ day }}</td>
+          <td class="num">{{ val | rs }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="2" class="empty">No sales in the last 14 days.</td></tr>
         {% endfor %}
       </tbody>
     </table>

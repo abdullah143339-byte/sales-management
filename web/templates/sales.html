@@ -2,70 +2,46 @@
 {% block header %}Add Sale{% endblock %}
 {% block content %}
 
-<div class="card" style="max-width: 640px;">
-  <form method="post" autocomplete="off">
-    <label>Product
-      <input type="text" name="product_search" list="product-list" id="product-search"
-             placeholder="Type to search product..." value="{{ request.form.get('product_search', '') }}">
-      <input type="hidden" name="product_id" id="product-id" value="{{ request.form.get('product_id', '') }}">
-    </label>
-    <datalist id="product-list">
-      {% for p in products %}
-        <option value="{{ p['name'] }}" data-id="{{ p['id'] }}" data-price="{{ p['unit_price_paisa'] | rs }}"></option>
-      {% endfor %}
-    </datalist>
-    <div class="two-col">
-      <label>Quantity
-        <input type="number" name="quantity" inputmode="numeric" min="1" step="1"
-               value="{{ request.form.get('quantity', '1') }}" required>
-      </label>
-      <label>Unit Price (Rs.)
-        <input type="text" id="price-hint" readonly class="note" style="background: rgba(255,255,255,0.03);"
-               placeholder="Select a product to see price">
-      </label>
-    </div>
-    <div class="two-col">
-      <label>Date
-        <input type="date" name="sale_date" value="{{ request.form.get('sale_date', today) }}">
-      </label>
-      <label>Time
-        <input type="time" name="sale_time" value="{{ request.form.get('sale_time', '') }}">
-      </label>
-    </div>
-    <button class="btn btn-primary btn-block" type="submit">Save Sale</button>
-  </form>
-  <p class="note">Total = Unit Price × Quantity. Stock is reduced automatically. Recent sales can be seen in <a href="{{ url_for('recent_sales') }}">Recent Sales</a>.</p>
+<div class="section-head">
+  <span class="section-accent"></span>
+  <h3>Add Sale</h3>
 </div>
 
-<div class="card">
-  <h3>Quick Sell</h3>
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Product</th>
-          <th class="num">Price</th>
-          <th class="num">Stock</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for p in products %}
-        <tr>
-          <td><b>{{ p['name'] }}</b></td>
-          <td class="num">{{ p['unit_price_paisa'] | rs }}</td>
-          <td class="num">{{ p['stock'] | inum }}</td>
-          <td class="row-actions">
-            <form class="inline" method="post" action="{{ url_for('sales_page') }}">
-              <input type="hidden" name="product_id" value="{{ p['id'] }}">
-              <input type="number" name="quantity" value="1" min="1" style="width: 80px;">
-              <button class="btn btn-sm btn-success" type="submit">Sell</button>
-            </form>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+<div class="sale-layout">
+  <div class="card sale-left">
+    <div class="panel-title">Search / Select Product</div>
+    <input type="text" id="sale-search" placeholder="Type product name or ID..." autocomplete="off">
+    <div class="sale-results" id="sale-results">
+      <div class="sale-hint">Start typing to search for a product.</div>
+    </div>
+  </div>
+
+  <div class="card sale-right">
+    <div class="panel-title">Sale Details</div>
+    <form id="sale-form" method="post" action="{{ url_for('sales_page') }}" autocomplete="off">
+      <input type="hidden" name="product_id" id="sale-product-id" value="">
+      <div id="sale-detail" class="sale-detail">Select a product to begin.</div>
+
+      <div class="sale-row">
+        <span class="sale-field-label">Unit Price:</span>
+        <span class="sale-price" id="sale-price">Rs. 0</span>
+      </div>
+
+      <div class="sale-row">
+        <span class="sale-field-label">Quantity:</span>
+        <input type="text" id="sale-qty" placeholder="Enter quantity sold" inputmode="numeric" style="width: 160px;">
+      </div>
+
+      <div class="sale-remaining" id="sale-remaining"></div>
+      <div class="sale-warning" id="sale-warning"></div>
+
+      <div class="sale-row total">
+        <span class="sale-field-label">Total Amount:</span>
+        <span class="sale-total" id="sale-total">Rs. 0</span>
+      </div>
+
+      <button type="submit" class="btn btn-success" id="sale-save" disabled>Save Sale</button>
+    </form>
   </div>
 </div>
 

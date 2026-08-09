@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block header %}Monthly Sales Report{% endblock %}
+{% block content %}
+
+<div class="section-head">
+  <span class="section-accent"></span>
+  <h3>Monthly Sales Report</h3>
+</div>
+
+<div class="filter-form">
+  <label>Year
+    <select name="year" onchange="var u=new URL(location.href);u.searchParams.set('year',this.value);location.href=u;">
+      {% for y in range(2024, 2032) %}
+        <option value="{{ y }}" {{ 'selected' if y == year }}>{{ y }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Month
+    <select name="month" onchange="var u=new URL(location.href);u.searchParams.set('month',this.value);location.href=u;">
+      {% for m in range(1, 13) %}
+        <option value="{{ m }}" {{ 'selected' if m == month }}>{{ ['', 'January','February','March','April','May','June','July','August','September','October','November','December'][m] }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label style="flex: 2;">
+    <input type="text" id="m-filter" placeholder="Filter by product...">
+  </label>
+  <button type="button" class="btn btn-print" onclick="window.print()">Print</button>
+</div>
+
+<div class="tabs">
+  <button type="button" class="tab active" data-tab="product">Product Summary</button>
+  <button type="button" class="tab" data-tab="daily">Daily Summary</button>
+</div>
+
+<div class="card tab-panel" id="tab-product">
+  <div class="table-wrap">
+    <table id="monthly-products">
+      <thead>
+        <tr>
+          <th style="width: 70px;">Sr No</th>
+          <th>Product Name</th>
+          <th class="num">Avg Price</th>
+          <th class="num">Total Qty</th>
+          <th class="num">Total Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in product_rows %}
+        <tr data-name="{{ r['product_name'] | lower }}">
+          <td class="p-id">{{ loop.index }}</td>
+          <td><b>{{ r['product_name'] }}</b></td>
+          <td class="num">{{ r['avg_price_paisa'] | rs }}</td>
+          <td class="num">{{ r['quantity'] | inum }}</td>
+          <td class="num">{{ r['total_amount_paisa'] | rs }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="empty">No sales this month.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card tab-panel" id="tab-daily" style="display: none;">
+  <div class="table-wrap">
+    <table id="monthly-daily">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th class="num">Quantity Sold</th>
+          <th class="num">Total Sales</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in daily_rows %}
+        <tr>
+          <td>{{ r['sale_date'] | fdate }}</td>
+          <td class="num">{{ r['quantity'] | inum }}</td>
+          <td class="num">{{ r['total_amount_paisa'] | rs }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="3" class="empty">No sales this month.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="totals-label">
+  Month: <b>{{ ['', 'January','February','March','April','May','June','July','August','September','October','November','December'][month] }} {{ year }}</b>
+  &nbsp;&nbsp;|&nbsp;&nbsp; TOTAL QUANTITY: <b>{{ totals.qty | inum }}</b>
+  &nbsp;&nbsp;|&nbsp;&nbsp; TOTAL SALES: <b>{{ totals.total | rs }}</b>
+</div>
+
+{% endblock %}

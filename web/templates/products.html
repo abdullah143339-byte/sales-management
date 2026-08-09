@@ -2,20 +2,31 @@
 {% block header %}Products{% endblock %}
 {% block content %}
 
-<div class="toolbar">
-  <h3 style="margin: 0;">Products</h3>
+<div class="section-head">
+  <span class="section-accent"></span>
+  <h3>Products</h3>
   <span class="spacer"></span>
-  <a class="btn btn-sm" href="{{ url_for('columns_page') }}">Manage Columns</a>
-  <a class="btn btn-primary" href="{{ url_for('product_new') }}">+ Add Product</a>
+  <form method="get" action="{{ url_for('products_page') }}" class="toolbar" style="margin: 0;">
+    <input type="text" name="q" id="q" value="{{ q }}" placeholder="Search product name or ID..." style="flex: 1; min-width: 200px;">
+    <select name="status" onchange="this.form.submit()" style="width: auto;">
+      <option value="all" {{ 'selected' if status == 'all' }}>All</option>
+      <option value="active" {{ 'selected' if status == 'active' }}>Active</option>
+      <option value="inactive" {{ 'selected' if status == 'inactive' }}>Inactive</option>
+    </select>
+  </form>
 </div>
 
-<form method="get" action="{{ url_for('products_page') }}" class="toolbar">
-  <input type="text" name="q" id="q" value="{{ q }}" placeholder="Search name or ID...">
-  <select name="status" onchange="this.form.submit()">
-    <option value="all" {{ 'selected' if status == 'all' }}>All</option>
-    <option value="active" {{ 'selected' if status == 'active' }}>Active</option>
-    <option value="inactive" {{ 'selected' if status == 'inactive' }}>Inactive</option>
-  </select>
+<div class="btn-row">
+  <a class="btn btn-primary" href="{{ url_for('product_new') }}">Add Product</a>
+  <button class="btn prod-act" data-act="edit" disabled>Edit</button>
+  <button class="btn prod-act" data-act="history" disabled>Sales History</button>
+  <button class="btn prod-act" data-act="toggle" disabled>Deactivate / Activate</button>
+  <button class="btn btn-danger prod-act" data-act="delete" disabled>Delete</button>
+  <a class="btn" href="{{ url_for('columns_page') }}">Manage Columns</a>
+</div>
+
+<form id="prod-forms" method="post" class="inline" style="display:none;">
+  <input type="hidden" name="pid" id="prod-pid" value="">
 </form>
 
 <div class="card">
@@ -23,19 +34,25 @@
     <table>
       <thead>
         <tr>
+          <th style="width: 34px;"></th>
+          <th>ID</th>
           {% for c in columns %}<th>{{ c['name'] }}</th>{% endfor %}
           <th>Status</th>
-          <th class="num">Actions</th>
+          <th>Created</th>
+          <th>Updated</th>
         </tr>
       </thead>
       <tbody>
         {% for row in rows %}
-        <tr>
+        <tr data-pid="{{ row['product']['id'] }}" data-name="{{ row['product']['name'] }}">
+          <td><input type="radio" name="sel" class="row-sel" value="{{ row['product']['id'] }}"></td>
+          <td class="p-id">{{ row['product']['id'] }}</td>
           {% for c in columns %}
             {% set cell = row['cols'][c['id']] %}
             <td>
               {% if c['id'] == 'unit_price_paisa' %}{{ cell | rs }}
-              {% elif c['id'] == 'stock' %}{{ cell | inum }}
+              {% elif c['id'] == 'stock' %}
+                <span class="pill {{ 'pill-inactive' if cell == 0 else 'pill-active' }}">{{ cell | inum }}</span>
               {% else %}{{ cell }}{% endif %}
             </td>
           {% endfor %}
@@ -44,23 +61,16 @@
               {{ row['product']['status'] }}
             </span>
           </td>
-          <td class="row-actions">
-            <a class="btn btn-sm" href="{{ url_for('product_edit', pid=row['product']['id']) }}">Edit</a>
-            <form class="inline" method="post" action="{{ url_for('product_toggle', pid=row['product']['id']) }}">
-              <button class="btn btn-sm">{{ 'Deactivate' if row['product']['status'] == 'active' else 'Activate' }}</button>
-            </form>
-            <form class="inline" method="post" action="{{ url_for('product_delete', pid=row['product']['id']) }}"
-                  data-confirm="Delete '{{ row['product']['name'] }}'? This cannot be undone.">
-              <button class="btn btn-sm btn-danger">Delete</button>
-            </form>
-          </td>
+          <td class="muted">{{ row['product']['created_at'][:10] }}</td>
+          <td class="muted">{{ row['product']['updated_at'][:10] }}</td>
         </tr>
         {% else %}
-        <tr><td colspan="{{ columns | length + 2 }}" class="empty"><span class="big">📦</span>No products found.</td></tr>
+        <tr><td colspan="{{ columns | length + 6 }}" class="empty"><span class="big">📦</span>No products found.</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
+  <div class="count-label">{{ rows | length }} product(s)</div>
 </div>
 
 {% endblock %}
