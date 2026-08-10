@@ -72,6 +72,13 @@ def _close_store(_exc):
     close_store()
 
 
+@app.after_request
+def _no_cache_html(response):
+    if response.mimetype == "text/html":
+        response.headers["Cache-Control"] = "no-store, max-age=0"
+    return response
+
+
 _admin_checked = False
 
 

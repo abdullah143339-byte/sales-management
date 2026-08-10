@@ -7,15 +7,15 @@
   <h3>Daily Sales Report</h3>
 </div>
 
-<div class="filter-form">
+<form class="filter-form" method="get" action="{{ url_for('report_daily') }}">
   <label>Date
-    <input type="date" name="date" id="ddate" value="{{ date }}" onchange="var u=new URL(location.href);u.searchParams.set('date',this.value);location.href=u;">
+    <input type="date" name="date" id="ddate" value="{{ date }}" onchange="this.form.submit()">
   </label>
   <label style="flex: 2;">
     <input type="text" id="d-filter" placeholder="Filter by product...">
   </label>
   <a class="btn" href="{{ url_for('report_daily', date=date, pdf=1) }}">Export PDF</a>
-</div>
+</form>
 
 <div class="card">
   <div class="table-wrap">
