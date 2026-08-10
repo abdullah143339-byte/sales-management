@@ -25,7 +25,7 @@
   <label style="flex: 2;">
     <input type="text" id="m-filter" placeholder="Filter by product...">
   </label>
-  <button type="button" class="btn btn-print" onclick="window.print()">Print</button>
+  <a class="btn" href="{{ url_for('report_monthly', year=year, month=month, pdf=1) }}">Export PDF</a>
 </div>
 
 <div class="tabs">

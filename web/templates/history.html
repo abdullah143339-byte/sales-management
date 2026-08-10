@@ -5,7 +5,7 @@
 <div class="toolbar">
   <a class="btn" href="{{ url_for('products_page') }}">← Back to Products</a>
   <span class="spacer"></span>
-  <button type="button" class="btn btn-print" onclick="window.print()">Print</button>
+  <a class="btn" href="{{ url_for('product_history', pid=product['id'], pdf=1) }}">Export PDF</a>
 </div>
 
 <div class="card">

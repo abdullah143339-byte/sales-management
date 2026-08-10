@@ -16,7 +16,8 @@
       {% endfor %}
     </select>
   </label>
-  <button type="button" class="btn btn-print" onclick="window.print()">Print</button>
+  <a class="btn {{ 'btn-disabled' if not product }}"
+     href="{{ url_for('report_product', product_id=product_id, pdf=1) if product else '#' }}">Export PDF</a>
 </div>
 
 {% if product %}

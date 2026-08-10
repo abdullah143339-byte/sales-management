@@ -12,6 +12,7 @@ import pathlib
 
 from flask import (
     Flask,
+    Response,
     flash,
     redirect,
     render_template,
@@ -23,6 +24,7 @@ from flask import (
 from utils import validation
 from utils.formatting import format_currency, format_date, format_time
 from web import data
+from web.pdf import build_report_pdf
 from web.store import close_store, get_store
 
 _BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
@@ -30,6 +32,19 @@ _BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
 app = Flask(__name__, static_folder=str(_BASE_DIR / "public" / "static"),
             static_url_path="/static")
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-me")
+
+_MONTHS = [
+    "", "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December",
+]
+
+
+def _pdf_response(pdf_bytes: bytes, filename: str) -> Response:
+    return Response(
+        pdf_bytes,
+        mimetype="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @app.template_filter("rs")
@@ -252,6 +267,21 @@ def product_history(pid):
         return redirect(url_for("products_page"))
     stats = data.product_stats(store, pid)
     history = data.product_sales_history(store, pid)
+    if request.args.get("pdf"):
+        history_rows = [
+            (format_date(h["sale_date"]), format_time(h["sale_time"]), h["quantity"],
+             format_currency(h["unit_price_paisa"]), format_currency(h["total_amount_paisa"]))
+            for h in history
+        ]
+        total_qty = sum(h["quantity"] for h in history)
+        total_amt = sum(h["total_amount_paisa"] for h in history)
+        pdf_bytes = build_report_pdf(
+            "Product Sales History", product["name"],
+            ["Date", "Time", "Quantity", "Unit Price", "Total"], history_rows,
+            total_row=["TOTAL", "", total_qty, "", format_currency(total_amt)],
+        )
+        safe = "".join(c for c in product["name"] if c.isalnum() or c in " _-")[:40] or "product"
+        return _pdf_response(pdf_bytes, f"{safe}_history.pdf")
     return render("history.html", active="products", product=product,
                   stats=stats, history=history)
 
@@ -395,6 +425,18 @@ def report_daily():
     date_str = request.form.get("date") or request.args.get("date") or datetime.date.today().isoformat()
     rows = data.sales_by_date(store, date_str)
     totals = data.daily_totals(store, date_str)
+    if request.args.get("pdf") or request.form.get("pdf"):
+        pdf_rows = [
+            (r["product_name"], format_currency(r["unit_price_paisa"]),
+             r["quantity"], format_currency(r["total_amount_paisa"]))
+            for r in rows
+        ]
+        pdf_bytes = build_report_pdf(
+            "Daily Sales Report", format_date(date_str),
+            ["Product", "Unit Price", "Quantity", "Total Amount"], pdf_rows,
+            total_row=["TOTAL", "", totals["qty"], format_currency(totals["total"])],
+        )
+        return _pdf_response(pdf_bytes, f"daily_report_{date_str}.pdf")
     return render("daily_report.html", active="daily", date=date_str,
                   rows=rows, totals=totals, fdate=format_date)
 
@@ -409,6 +451,18 @@ def report_monthly():
     product_rows = data.monthly_product_summary(store, year, month)
     daily_rows = data.monthly_daily_summary(store, year, month)
     totals = data.monthly_totals(store, year, month)
+    if request.args.get("pdf") or request.form.get("pdf"):
+        pdf_rows = [
+            (i, r["product_name"], format_currency(r["avg_price_paisa"]),
+             r["quantity"], format_currency(r["total_amount_paisa"]))
+            for i, r in enumerate(product_rows, start=1)
+        ]
+        pdf_bytes = build_report_pdf(
+            "Monthly Sales Report", f"{_MONTHS[month]} {year}",
+            ["Sr No", "Product Name", "Avg Price", "Total Qty", "Total Amount"], pdf_rows,
+            total_row=["", "TOTAL", "", totals["qty"], format_currency(totals["total"])],
+        )
+        return _pdf_response(pdf_bytes, f"monthly_report_{year}_{month:02d}.pdf")
     return render("monthly_report.html", active="monthly", year=year, month=month,
                   product_rows=product_rows, daily_rows=daily_rows, totals=totals)
 
@@ -425,8 +479,23 @@ def report_product():
         if product is not None:
             stats = data.product_stats(store, int(pid))
             history = data.product_sales_history(store, int(pid))
+    if (request.args.get("pdf") or request.form.get("pdf")) and product is not None:
+        history_rows = [
+            (format_date(h["sale_date"]), format_time(h["sale_time"]), h["quantity"],
+             format_currency(h["unit_price_paisa"]), format_currency(h["total_amount_paisa"]))
+            for h in history
+        ]
+        total_qty = sum(h["quantity"] for h in history)
+        total_amt = sum(h["total_amount_paisa"] for h in history)
+        pdf_bytes = build_report_pdf(
+            "Product Sales History", product["name"],
+            ["Date", "Time", "Quantity", "Unit Price", "Total"], history_rows,
+            total_row=["TOTAL", "", total_qty, "", format_currency(total_amt)],
+        )
+        safe = "".join(c for c in product["name"] if c.isalnum() or c in " _-")[:40] or "product"
+        return _pdf_response(pdf_bytes, f"{safe}_history.pdf")
     return render("product_report.html", active="product", products=products,
-                  product=product, stats=stats, history=history)
+                  product=product, stats=stats, history=history, product_id=pid)
 
 
 @app.route("/top-selling")
