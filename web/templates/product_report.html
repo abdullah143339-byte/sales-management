@@ -10,6 +10,7 @@
 <div class="filter-form">
   <label style="flex: 3;">Product
     <select name="product_id" onchange="var u=new URL(location.href);u.searchParams.set('product_id',this.value);location.href=u;">
+      <option value="">— Select a product —</option>
       {% for p in products %}
         <option value="{{ p['id'] }}" {{ 'selected' if product and p['id'] == product['id'] }}>{{ p['name'] }}</option>
       {% endfor %}

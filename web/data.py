@@ -173,17 +173,6 @@ def sales_by_date(store: Store, sale_date):
     )
 
 
-def sale_dates(store: Store):
-    return [r["sale_date"] for r in store.query(
-        "SELECT DISTINCT sale_date FROM sales ORDER BY sale_date DESC"
-    )]
-
-
-def latest_sale_date(store: Store):
-    row = store.query_one("SELECT MAX(sale_date) AS d FROM sales")
-    return row["d"]
-
-
 def daily_totals(store: Store, sale_date):
     return store.query_one(
         "SELECT COALESCE(SUM(quantity),0) AS qty, COALESCE(SUM(total_amount_paisa),0) AS total,"

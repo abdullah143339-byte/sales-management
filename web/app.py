@@ -422,17 +422,9 @@ def api_product_search():
 @login_required
 def report_daily():
     store = get_store()
-    today = datetime.date.today().isoformat()
-    date_arg = request.form.get("date") or request.args.get("date")
-    if date_arg:
-        date_str = date_arg
-    else:
-        date_str = today
-        if data.daily_totals(store, today)["transactions"] == 0:
-            date_str = data.latest_sale_date(store) or today
+    date_str = request.form.get("date") or request.args.get("date") or datetime.date.today().isoformat()
     rows = data.sales_by_date(store, date_str)
     totals = data.daily_totals(store, date_str)
-    dates = data.sale_dates(store)
     if request.args.get("pdf") or request.form.get("pdf"):
         pdf_rows = [
             (r["product_name"], format_currency(r["unit_price_paisa"]),
@@ -446,7 +438,7 @@ def report_daily():
         )
         return _pdf_response(pdf_bytes, f"daily_report_{date_str}.pdf")
     return render("daily_report.html", active="daily", date=date_str,
-                  rows=rows, totals=totals, dates=dates, fdate=format_date)
+                  rows=rows, totals=totals, fdate=format_date)
 
 
 @app.route("/reports/monthly", methods=["GET", "POST"])
@@ -484,12 +476,9 @@ def report_product():
     product = stats = history = None
     if pid:
         product = data.get_product(store, int(pid))
-    if product is None and products:
-        product = products[0]
-        pid = str(product["id"])
-    if product is not None:
-        stats = data.product_stats(store, product["id"])
-        history = data.product_sales_history(store, product["id"])
+        if product is not None:
+            stats = data.product_stats(store, int(pid))
+            history = data.product_sales_history(store, int(pid))
     if (request.args.get("pdf") or request.form.get("pdf")) and product is not None:
         history_rows = [
             (format_date(h["sale_date"]), format_time(h["sale_time"]), h["quantity"],
