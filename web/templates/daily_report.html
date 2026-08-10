@@ -9,8 +9,23 @@
 
 <div class="filter-form">
   <label>Date
-    <input type="date" name="date" id="ddate" value="{{ date }}" onchange="var u=new URL(location.href);u.searchParams.set('date',this.value);location.href=u;">
+    <input type="date" name="date" id="ddate" value="{{ date }}" list="d-dates" onchange="var u=new URL(location.href);u.searchParams.set('date',this.value);location.href=u;">
+    <datalist id="d-dates">
+      {% for d in dates %}
+      <option value="{{ d }}">{{ d | fdate }}</option>
+      {% endfor %}
+    </datalist>
   </label>
+  {% if dates %}
+  <label>Jump to
+    <select onchange="var u=new URL(location.href);u.searchParams.set('date',this.value);location.href=u;">
+      <option value="">— Date with sales —</option>
+      {% for d in dates %}
+      <option value="{{ d }}">{{ d | fdate }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  {% endif %}
   <label style="flex: 2;">
     <input type="text" id="d-filter" placeholder="Filter by product...">
   </label>
